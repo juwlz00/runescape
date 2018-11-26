@@ -39,13 +39,21 @@ noun_phrase(T0,T4,Ind) :-
     adjectives(T1,T2,Ind),
     noun(T2,T3,Ind),
     mp(T3,T4,Ind).
+
+% determiners
+det([the | T],T,_).
+det([a | T],T,_).
+det(T,T,_).
 	
 % adjectives(T0,T1,Ind) is true if 
 % T0-T1 is an adjective is true of Ind
 adjectives(T0,T2,Ind) :-
-    adj(T0,T1,Ind),
+%    adj(T0,T1,Ind),
     adjectives(T1,T2,Ind).
 adjectives(T,T,_).
+
+% adj([large | T],T,Obj) :- large(Obj).
+% adj([Lang,speaking | T],T,Obj) :- speaks(Obj,Lang).
 
 % modifying phrase
 mp(T0,T2,Subject) :-
@@ -66,9 +74,9 @@ reln([same,difficulty| T],T,O1,O2) :- similarDifficulty(O1,O2).
 reln([similar,length | T],T,O1,O2) :- similarLength(O1,O2).
 reln([same,length| T],T,O1,O2) :- similarLength(O1,O2).
 reln([similar,quest,points | T],T,O1,O2) :- similarQP(O1,O2).
-reln([same,quest,points| T],T,O1,O2) :- similarQp(O1,O2).
+reln([same,quest,points| T],T,O1,O2) :- similarQP(O1,O2).
 reln([similar,points | T],T,O1,O2) :- similarQP(O1,O2).
-reln([same,points| T],T,O1,O2) :- similarQp(O1,O2).
+reln([same,points| T],T,O1,O2) :- similarQP(O1,O2).
 
 % question(Question,QR,Object) is true if Query provides an answer about Object to Question
 question(['Is' | T0],T2,Obj) :-
@@ -96,7 +104,7 @@ ask(Q,A) :-
   member((X,Y), Quest).
   
  similarQP(X,Y) :-
-  setof((X,Y), Z^(quest_points)(X,Z), quest_points(Y,Z), \+X=Y), Quest),
+  setof((X,Y), Z^(quest_points(X,Z), quest_points(Y,Z), \+X=Y), Quest),
   member((X,Y), Quest).
   
 % To get the input from a line:
