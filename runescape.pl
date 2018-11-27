@@ -114,12 +114,10 @@ mp2([with|T0],T2,O1,C0,C2) :-
 noun2([quest | T],T,Obj,C,[quest(Obj)|C]).
 noun2([X | T],T,X,C,C) :- quest(X).
 
-
 % relations
 
-
-reln2([similar,difficulty | T],T,O1,O2,_,[similarDifficulty(O1,O2)]).
-reln2([same,difficulty| T],T,O1,O2,_,[similarDifficulty(O1,O2)]).
+reln2([similar,difficulty,as | T],T,O1,O2,_,[similarDifficulty(O1,O2)]).
+reln2([same,difficulty,as| T],T,O1,O2,_,[similarDifficulty(O1,O2)]).
 reln2([similar,length | T],T,O1,O2,_,[similarLength(O1,O2)]).
 reln2([same,length| T],T,O1,O2,_,[similarLength(O1,O2)]).
 reln2([similar,quest,points | T],T,O1,O2,_,[similarQP(O1,O2)]).
@@ -140,20 +138,29 @@ question(['What' | T0],T2,Obj) :-
     mp(T1,T2,Obj).
 	
 % complex questions 
-question2(['Is' | T0],T1,Obj,C0,C1) :-
+question2([Is | T0],T1,Obj,C0,C1) :-
     noun_phrase2(T0,T1,Obj,C0,C1),
 	mp2(T1,T2,Obj,C0,C1).
-question2(['What',is | T0],T1,Obj,C0,C1) :-
+question2([What,is | T0],T1,Obj,C0,C1) :-
     noun_phrase2(T0,T1,Obj,C0,C1).
-question2(['What',is | T0],T1,Obj,C0,C1) :-
+question2([What,is | T0],T1,Obj,C0,C1) :-
 	mp2(T1,T2,Obj,C0,C1).
-question2(['What' | T0],T1,Obj,C0,C1) :-
+question2([What | T0],T1,Obj,C0,C1) :-
     noun_phrase2(T0,T1,Obj,C0,C1),
 	mp2(T1,T2,Obj,C0,C1).
 
 % ask(Q,A) gives answer A to question Q
 ask(Q,A) :-
     question(Q,[],A).
+
+ask2(Q,A) :-
+    question2(Q,[],A,[],C),
+    prove(C).
+
+prove([]).
+prove([H|T]) :-
+    call(H),      
+    prove(T).
 
 % Helper functions to complete specific queries
  similarDifficulty(X,Y) :-
@@ -181,3 +188,4 @@ q(Ans) :-
 % ?- ask(['What',is,a,novice,difficulty,quest],A).
 % ?- ask(['What',is,a,medium,length,quest],A).
 % ?- ask(['What',is,a,novice,difficulty,short,length,quest],A).
+% ?- ask(['What',is,a,quest,with,similar,difficulty,as,demon_slayer],A).
