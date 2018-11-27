@@ -33,6 +33,9 @@ mp(T0,T2,Subject) :-
 mp([that|T0],T2,Subject) :-
     reln(T0,T1,Subject,Object),
     noun_phrase(T1,T2,Object).
+mp([for|T0],T2,Subject) :-
+    reln(T0,T1,Subject,Object),
+    noun_phrase(T1,T2,Object).
 mp(T,T,_).
 
 % Dictionary
@@ -46,7 +49,7 @@ noun([X | T],T,X) :- quest_difficulty(A,X).
 
 reln([unlocked, by | T],T,O1,O2) :- proceeds(O1,O2).
 reln([required, for | T],T,O1,O2) :- preceeds(O1,O2).
-
+reln([level | T],T,O1,O2) :- quest_level(O1,A), A \= T.
 
 % NLP v2
 
@@ -190,6 +193,12 @@ quest_points(demon_slayer,3).
 quest_points(the_knights_sword,1).
 quest_points(black_knights_fortress,3).
 
+quest_level(cooks_assistant,100).
+quest_level(dragon_slayer,10).
+quest_level(demon_slayer,5).
+quest_level(the_knights_sword,60).
+quest_level(black_knights_fortress,1).
+
 preceeds(cooks_assistant,demon_slayer).
 preceeds(cooks_assistant,dragon_slayer).
 preceeds(demon_slayer,dragon_slayer).
@@ -213,3 +222,4 @@ proceeds(B,A):-
 % ?- ask2(['What',is,a,quest,with,the,same,quest,points,as,demon_slayer],A).
 % ?- ask2(['What',is,a,quest,with,the,same,points,as,cooks_assistant],A).
 % ?- ask(['What',is,a,quest,for,level,30],A).
+% ?- ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
