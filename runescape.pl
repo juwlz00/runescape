@@ -200,3 +200,4 @@ q(Ans) :-
 % ?- ask2(['What',is,a,quest,with,similar,length,as,cooks_assistant],A).
 % ?- ask2(['What',is,a,quest,with,the,same,quest,points,as,demon_slayer],A).
 % ?- ask2(['What',is,a,quest,with,the,same,points,as,cooks_assistant],A).
+% ?- ask(['What',is,a,quest,for,level,30],A).
