@@ -1,8 +1,7 @@
 :- use_module(library(http/http_open)).
 :- use_module(library(http/json)).
 :- use_module(library(http/json_convert)).
-:- dynamic(found/2).
-% :- dynamic(similarDifficulty/2).
+
 
 % Make a call to the Game API and build the knowledge base dynamically
 steam(Dict, R, S) :-
@@ -31,6 +30,15 @@ dict_y([H|R], H) :-
 
 % Build the knowledge base first whenever the project is made before allowing users to make queries
 :- initialization(steam(_,_,_)).
+:- initialization(start(A)).
+
+start(Ans) :-
+    write("What level are you?: "),flush_output(current_output),
+    readln(Lnlvl),
+	write("Are you a member?: y/n "),flush_output(current_output),
+    readln(Lnmem),
+	assert(user_level(Lnlvl)),
+	assert(user_member(Lnmem)).
 
 % NLP based off Dr.Poole's geography.pl code
 % by a noun followed by an optional modifying phrase:
@@ -115,15 +123,14 @@ noun2([quest | T],T,Obj,C,[quest(Obj)|C]).
 noun2([X | T],T,X,C,C) :- quest(X).
 
 % relations
-
-reln2([similar,difficulty,as | T],T,O1,O2,_,[similarDifficulty(O1,O2)]).
-reln2([same,difficulty,as| T],T,O1,O2,_,[similarDifficulty(O1,O2)]).
-reln2([similar,length | T],T,O1,O2,_,[similarLength(O1,O2)]).
-reln2([same,length| T],T,O1,O2,_,[similarLength(O1,O2)]).
-reln2([similar,quest,points | T],T,O1,O2,_,[similarQP(O1,O2)]).
-reln2([same,quest,points| T],T,O1,O2,_,[similarQP(O1,O2)]).
-reln2([similar,points | T],T,O1,O2,_,[similarQP(O1,O2)]).
-reln2([same,points| T],T,O1,O2,_,[similarQP(O1,O2)]).
+reln2([similar,difficulty,as | T],T,O1,O2,_,[sameDifficulty(O1,O2)]).
+reln2([same,difficulty,as| T],T,O1,O2,_,[sameDifficulty(O1,O2)]).
+reln2([similar,length | T],T,O1,O2,_,[sameLength(O1,O2)]).
+reln2([same,length| T],T,O1,O2,_,[sameLength(O1,O2)]).
+reln2([similar,quest,points | T],T,O1,O2,_,[sameQP(O1,O2)]).
+reln2([same,quest,points| T],T,O1,O2,_,[sameQP(O1,O2)]).
+reln2([similar,points | T],T,O1,O2,_,[sameQP(O1,O2)]).
+reln2([same,points| T],T,O1,O2,_,[sameQP(O1,O2)]).
 
 % question(Question,QR,Object) is true if Query provides an answer about Object to Question
 question(['Is' | T0],T2,Obj) :-
@@ -163,15 +170,15 @@ prove([H|T]) :-
     prove(T).
 
 % Helper functions to complete specific queries
- similarDifficulty(X,Y) :-
+ sameDifficulty(X,Y) :-
   setof((X,Y), Z^(quest_difficulty(X,Z), quest_difficulty(Y,Z), \+X=Y), Quest),
   member((X,Y), Quest).
 
- similarLength(X,Y) :-
+ sameLength(X,Y) :-
   setof((X,Y), Z^(quest_length(X,Z), quest_length(Y,Z), \+X=Y), Quest),
   member((X,Y), Quest).
   
- similarQP(X,Y) :-
+ sameQP(X,Y) :-
   setof((X,Y), Z^(quest_points(X,Z), quest_points(Y,Z), \+X=Y), Quest),
   member((X,Y), Quest).
   
@@ -188,4 +195,8 @@ q(Ans) :-
 % ?- ask(['What',is,a,novice,difficulty,quest],A).
 % ?- ask(['What',is,a,medium,length,quest],A).
 % ?- ask(['What',is,a,novice,difficulty,short,length,quest],A).
-% ?- ask(['What',is,a,quest,with,similar,difficulty,as,demon_slayer],A).
+% ?- ask2(['What',is,a,quest,with,similar,difficulty,as,demon_slayer],A).
+% ?- ask2(['What',is,a,quest,with,the,same,difficulty,as,demon_slayer],A).
+% ?- ask2(['What',is,a,quest,with,similar,length,as,cooks_assistant],A).
+% ?- ask2(['What',is,a,quest,with,the,same,quest,points,as,demon_slayer],A).
+% ?- ask2(['What',is,a,quest,with,the,same,points,as,cooks_assistant],A).
