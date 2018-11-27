@@ -57,10 +57,10 @@ adjectives(T,T,_).
 
 % modifying phrase
 mp(T0,T2,Subject) :-
-    reln(T0,T1,Subject,Object),
+%    reln(T0,T1,Subject,Object),
     noun_phrase(T1,T2,Object).
 mp([that|T0],T2,Subject) :-
-    reln(T0,T1,Subject,Object),
+%    reln(T0,T1,Subject,Object),
     noun_phrase(T1,T2,Object).
 mp(T,T,_).
 
@@ -68,15 +68,60 @@ mp(T,T,_).
 noun([quest | T],T,Obj) :- quest(Obj).
 noun([X | T],T,X) :- quest(X).
 
+% NLP v2
+
+noun_phrase2(T0,T4,Obj,C0,C4) :-
+    det2(T0,T1,Obj,C0,C1),
+    adjectives2(T1,T2,Obj,C1,C2),
+    noun2(T2,T3,Obj,C2,C3),
+    mp2(T3,T4,Obj,C3,C4).
+
+det2([the | T],T,_,C,C).
+det2([a | T],T,_,C,C).
+det2([as | T],T,_,C,C).
+det2(T,T,_,C,C).
+
+% Adjectives.
+adjectives2(T,T,_,C,C).
+adjectives2(T0,T2,Obj,C0,C2) :-
+    adjective2(T0,T1,Obj,C0,C1),
+    adjectives2(T1,T2,Obj,C1,C2).
+
+adjective2([H,s | T],T,Obj,C,[language(Obj,H)|C]).
+
+mp2(T,T,_,C,C).
+mp2(T0,T2,O1,C0,C2) :-
+    reln2(T0,T1,O1,O2,C0,C1),
+    noun_phrase2(T1,T2,O2,C1,C2).
+mp2([that|T0],T2,O1,C0,C2) :-
+    reln2(T0,T1,O1,O2,C0,C1),
+    noun_phrase2(T1,T2,O2,C1,C2).
+mp2([that,is|T0],T2,O1,C0,C2) :-
+    reln2(T0,T1,O1,O2,C0,C1),
+    noun_phrase2(T1,T2,O2,C1,C2).
+mp2([with|T0],T2,O1,C0,C2) :-
+    reln2(T0,T1,O1,O2,C0,C1),
+    noun_phrase2(T1,T2,O2,C1,C2).
+  mp2([with, the|T0],T2,O1,C0,C2) :-
+      reln2(T0,T1,O1,O2,C0,C1),
+      noun_phrase2(T1,T2,O2,C1,C2).
+
+% Noun
+noun2([quest | T],T,Obj,C,[quest(Obj)|C]).
+noun2([X | T],T,X,C,C) :- quest(X).
+
+
 % relations
-reln([similar,difficulty | T],T,O1,O2) :- similarDifficulty(O1,O2).
-reln([same,difficulty| T],T,O1,O2) :- similarDifficulty(O1,O2).
-reln([similar,length | T],T,O1,O2) :- similarLength(O1,O2).
-reln([same,length| T],T,O1,O2) :- similarLength(O1,O2).
-reln([similar,quest,points | T],T,O1,O2) :- similarQP(O1,O2).
-reln([same,quest,points| T],T,O1,O2) :- similarQP(O1,O2).
-reln([similar,points | T],T,O1,O2) :- similarQP(O1,O2).
-reln([same,points| T],T,O1,O2) :- similarQP(O1,O2).
+
+
+reln2([similar,difficulty | T],T,O1,O2,_,[similarDifficulty(O1,O2)]).
+reln2([same,difficulty| T],T,O1,O2,_,[similarDifficulty(O1,O2)]).
+reln2([similar,length | T],T,O1,O2,_,[similarLength(O1,O2)]).
+reln2([same,length| T],T,O1,O2,_,[similarLength(O1,O2)]).
+reln2([similar,quest,points | T],T,O1,O2,_,[similarQP(O1,O2)]).
+reln2([same,quest,points| T],T,O1,O2,_,[similarQP(O1,O2)]).
+reln2([similar,points | T],T,O1,O2,_,[similarQP(O1,O2)]).
+reln2([same,points| T],T,O1,O2,_,[similarQP(O1,O2)]).
 
 % question(Question,QR,Object) is true if Query provides an answer about Object to Question
 question(['Is' | T0],T2,Obj) :-
@@ -89,6 +134,18 @@ question(['What',is | T0],T1,Obj) :-
 question(['What' | T0],T2,Obj) :-
     noun_phrase(T0,T1,Obj),
     mp(T1,T2,Obj).
+	
+% complex questions 
+question2(['Is' | T0],T1,Obj,C0,C1) :-
+    noun_phrase2(T0,T1,Obj,C0,C1),
+	mp2(T1,T2,Obj,C0,C1).
+question2(['What',is | T0],T1,Obj,C0,C1) :-
+    noun_phrase2(T0,T1,Obj,C0,C1).
+question2(['What',is | T0],T1,Obj,C0,C1) :-
+	mp2(T1,T2,Obj,C0,C1).
+question2(['What' | T0],T1,Obj,C0,C1) :-
+    noun_phrase2(T0,T1,Obj,C0,C1),
+	mp2(T1,T2,Obj,C0,C1).
 
 % ask(Q,A) gives answer A to question Q
 ask(Q,A) :-
