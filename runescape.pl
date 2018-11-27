@@ -6,6 +6,8 @@ start(Ans) :-
 	assert(user_level(Head)),
 	assert(user_member(Lnmem)).
 
+:- initialization(start(A)).	
+
 % NLP based off Dr.Poole's geography.pl code
 % by a noun followed by an optional modifying phrase:
 noun_phrase(T0,T4,Ind) :-
