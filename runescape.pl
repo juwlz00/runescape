@@ -48,25 +48,29 @@ det(T,T,_).
 % adjectives(T0,T1,Ind) is true if 
 % T0-T1 is an adjective is true of Ind
 adjectives(T0,T2,Ind) :-
-%    adj(T0,T1,Ind),
+    adj(T0,T1,Ind),
     adjectives(T1,T2,Ind).
 adjectives(T,T,_).
 
-% adj([large | T],T,Obj) :- large(Obj).
-% adj([Lang,speaking | T],T,Obj) :- speaks(Obj,Lang).
-
 % modifying phrase
 mp(T0,T2,Subject) :-
-%    reln(T0,T1,Subject,Object),
+    reln(T0,T1,Subject,Object),
     noun_phrase(T1,T2,Object).
 mp([that|T0],T2,Subject) :-
-%    reln(T0,T1,Subject,Object),
+    reln(T0,T1,Subject,Object),
     noun_phrase(T1,T2,Object).
 mp(T,T,_).
+
+% Dictionary
+adj([Lang,difficulty | T],T,Obj) :- quest_difficulty(Obj,Lang).
+adj([Lang,length | T],T,Obj) :- quest_length(Obj,Lang).
 
 % nouns
 noun([quest | T],T,Obj) :- quest(Obj).
 noun([X | T],T,X) :- quest(X).
+noun([X | T],T,X) :- quest_difficulty(A,X).
+
+reln([place,holder | T],T,O1,O2) :- quest_difficulty(O1,O2).
 
 % NLP v2
 
@@ -171,3 +175,9 @@ q(Ans) :-
     readln(Ln),
     question(Ln,End,Ans),
     member(End,[[],['?'],['.']]).
+	
+% Try
+% ?- ask(['What',is,a,quest],A).
+% ?- ask(['What',is,a,novice,difficulty,quest],A).
+% ?- ask(['What',is,a,medium,length,quest],A).
+% ?- ask(['What',is,a,novice,difficulty,short,length,quest],A).
