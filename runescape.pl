@@ -8,7 +8,7 @@ start(_) :-
 
 :- initialization(start(_)).
 
-% NLP based off Dr.Poole's geography.pl code
+% NLP based off Dr.Poole's geography.pl and nl_interface_dl code
 % by a noun followed by an optional modifying phrase:
 noun_phrase(T0,T4,Ind) :-
     det(T0,T1,Ind),
@@ -73,36 +73,33 @@ adjectives2(T0,T2,Obj,C0,C2) :-
     adjectives2(T1,T2,Obj,C1,C2).
 
 adjective2([H,s | T],T,Obj,C,[language(Obj,H)|C]).
-
 mp2(T,T,_,C,C).
 mp2(T0,T2,O1,C0,C2) :-
     reln2(T0,T1,O1,O2,C0,C1),
     noun_phrase2(T1,T2,O2,C1,C2).
-mp2([that|T0],T2,O1,C0,C2) :-
+mp2([that, has|T0],T2,O1,C0,C2) :-
     reln2(T0,T1,O1,O2,C0,C1),
     noun_phrase2(T1,T2,O2,C1,C2).
-mp2([that,is|T0],T2,O1,C0,C2) :-
+mp2([that, has, the|T0],T2,O1,C0,C2) :-
     reln2(T0,T1,O1,O2,C0,C1),
     noun_phrase2(T1,T2,O2,C1,C2).
 mp2([with|T0],T2,O1,C0,C2) :-
     reln2(T0,T1,O1,O2,C0,C1),
     noun_phrase2(T1,T2,O2,C1,C2).
-  mp2([with, the|T0],T2,O1,C0,C2) :-
-      reln2(T0,T1,O1,O2,C0,C1),
-      noun_phrase2(T1,T2,O2,C1,C2).
+mp2([with, the|T0],T2,O1,C0,C2) :-
+    reln2(T0,T1,O1,O2,C0,C1),
+    noun_phrase2(T1,T2,O2,C1,C2).
 
 % Noun
 noun2([quest | T],T,Obj,C,[quest(Obj)|C]).
 noun2([X | T],T,X,C,C) :- quest(X).
 
 % relations
-reln2([similar,difficulty,as | T],T,O1,O2,_,[sameDifficulty(O1,O2)]).
 reln2([same,difficulty,as| T],T,O1,O2,_,[sameDifficulty(O1,O2)]).
-reln2([similar,length | T],T,O1,O2,_,[sameLength(O1,O2)]).
+reln2([more,points,than| T],T,O1,O2,_,[morePoints(O1,O2)]).
+reln2([less,points,than| T],T,O1,O2,_,[lessPoints(O1,O2)]).
 reln2([same,length| T],T,O1,O2,_,[sameLength(O1,O2)]).
-reln2([similar,quest,points | T],T,O1,O2,_,[sameQP(O1,O2)]).
 reln2([same,quest,points| T],T,O1,O2,_,[sameQP(O1,O2)]).
-reln2([similar,points | T],T,O1,O2,_,[sameQP(O1,O2)]).
 reln2([same,points| T],T,O1,O2,_,[sameQP(O1,O2)]).
 
 % question(Question,QR,Object) is true if Query provides an answer about Object to Question
@@ -117,15 +114,14 @@ question(['What' | T0],T2,Obj) :-
     noun_phrase(T0,T1,Obj),
     mp(T1,T2,Obj).
 	
-	
 % complex questions 
 question2(['Is' | T0],T2,Obj,C0,C1) :-
     noun_phrase2(T0,T1,Obj,C0,C1),
 	mp2(T1,T2,Obj,C0,C1).
 question2(['What',is | T0],T1,Obj,C0,C1) :-
-    noun_phrase2(T0,T1,Obj,C0,C1).
-question2(['What',is | T0],T1,Obj,C0,C1) :-
 	mp2(T0,T1,Obj,C0,C1).
+question2(['What',is | T0],T1,Obj,C0,C1) :-
+    noun_phrase2(T0,T1,Obj,C0,C1).
 question2(['What' | T0],T2,Obj,C0,C1) :-
     noun_phrase2(T0,T1,Obj,C0,C1),
 	mp2(T1,T2,Obj,C0,C1).
@@ -136,28 +132,53 @@ ask(Q,A) :-
 
 ask2(Q,A) :-
     question2(Q,[],A,[],C),
-    prove(C).
+    prove_all(C).
 
-prove([]).
-prove([H|T]) :-
-    call(H),      
-    prove(T).
+% prove_all(L) proves all elements of L against the database
+prove_all([]).
+prove_all([H|T]) :-
+    call(H),      % built-in Prolog predicate calls an atom
+    prove_all(T).
 
 % Helper functions to complete specific queries
- sameDifficulty(X,Y) :-
-  setof((X,Y), Z^(quest_difficulty(X,Z), quest_difficulty(Y,Z), \+X=Y), Quest),
-  member((X,Y), Quest).
+sameDifficulty(X,Y) :-
+  quest_difficulty(X,Z), 
+  quest_difficulty(Y,Z),
+  X \= Y,
+  quest(X),
+  quest(Y).
 
- sameLength(X,Y) :-
-  setof((X,Y), Z^(quest_length(X,Z), quest_length(Y,Z), \+X=Y), Quest),
-  member((X,Y), Quest).
+sameLength(X,Y) :-
+  quest_length(X,Z), 
+  quest_length(Y,Z),
+  X \= Y,
+  quest(X),
+  quest(Y).
   
- sameQP(X,Y) :-
-  setof((X,Y), Z^(quest_points(X,Z), quest_points(Y,Z), \+X=Y), Quest),
-  member((X,Y), Quest).
+sameQP(X,Y) :-
+  quest_points(X,Z), 
+  quest_points(Y,Z),
+  X \= Y,
+  quest(X),
+  quest(Y).
+  
+morePoints(X,Y) :-
+  quest_points(X,A), 
+  quest_points(Y,B),
+  A > B,
+  X \= Y,
+  quest(X),
+  quest(Y).
+  
+lessPoints(X,Y) :-
+  quest_points(X,A), 
+  quest_points(Y,B),
+  A < B,
+  X \= Y,
+  quest(X),
+  quest(Y).
   
 % To get the input from a line:
-
 q(Ans) :-
     write("Ask the guide: "),flush_output(current_output),
     readln(Ln),
@@ -225,12 +246,15 @@ ask(['What',is,a,medium,length,quest],A).
 ask(['What',is,a,novice,difficulty,short,length,quest],A).
 ask(['What',is,a,novice,difficulty,quest,required,for,demon_slayer],A).
 ̀ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
-ask2(['What',is,a,quest,with,similar,difficulty,as,demon_slayer],A).
 ask2(['What',is,a,quest,with,the,same,difficulty,as,demon_slayer],A).
-ask2(['What',is,a,quest,with,similar,length,as,cooks_assistant],A).
+ask2(['What',is,a,quest,with,more,points,than,cooks_assistant],A).
+ask2(['What',is,a,quest,with,less,points,than,cooks_assistant],A).
 ask2(['What',is,a,quest,with,the,same,quest,points,as,demon_slayer],A).
 ask2(['What',is,a,quest,with,the,same,points,as,cooks_assistant],A).
+ask(['What',is,a,member,medium,length,quest],A).
+
+
+
 ask(['What',is,a,quest,for,level,30],A).
 ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
-ask(['What',is,a,member,medium,length,quest],A).
 */
