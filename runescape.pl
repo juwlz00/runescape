@@ -1,10 +1,12 @@
-start(Ans) :-
+start(_) :-
     write("What level are you?: "),flush_output(current_output),
-    readln([Head|Lnlvl]),
+    readln([Head|_]),
+	assert(user_level(Head)),
 	write("Are you a member?: y/n "),flush_output(current_output),
     readln(Lnmem),
-	assert(user_level(Head)),
 	assert(user_member(Lnmem)).
+
+:- initialization(start(_)).
 
 % NLP based off Dr.Poole's geography.pl code
 % by a noun followed by an optional modifying phrase:
@@ -45,11 +47,11 @@ adj([Lang,length | T],T,Obj) :- quest_length(Obj,Lang).
 % nouns
 noun([quest | T],T,Obj) :- quest(Obj).
 noun([X | T],T,X) :- quest(X).
-noun([X | T],T,X) :- quest_difficulty(A,X).
+noun([X | T],T,X) :- quest_difficulty(_,X).
 
 reln([unlocked, by | T],T,O1,O2) :- proceeds(O1,O2).
 reln([required, for | T],T,O1,O2) :- preceeds(O1,O2).
-reln([level | T],T,O1,O2) :- quest_level(O1,A), A \= T.
+% reln([level | T],T,O1,O2) :- quest_level(_,T).
 
 % NLP v2
 
@@ -115,15 +117,16 @@ question(['What' | T0],T2,Obj) :-
     noun_phrase(T0,T1,Obj),
     mp(T1,T2,Obj).
 	
+	
 % complex questions 
-question2([Is | T0],T1,Obj,C0,C1) :-
+question2(['Is' | T0],T2,Obj,C0,C1) :-
     noun_phrase2(T0,T1,Obj,C0,C1),
 	mp2(T1,T2,Obj,C0,C1).
-question2([What,is | T0],T1,Obj,C0,C1) :-
+question2(['What',is | T0],T1,Obj,C0,C1) :-
     noun_phrase2(T0,T1,Obj,C0,C1).
-question2([What,is | T0],T1,Obj,C0,C1) :-
-	mp2(T1,T2,Obj,C0,C1).
-question2([What | T0],T1,Obj,C0,C1) :-
+question2(['What',is | T0],T1,Obj,C0,C1) :-
+	mp2(T0,T1,Obj,C0,C1).
+question2(['What' | T0],T2,Obj,C0,C1) :-
     noun_phrase2(T0,T1,Obj,C0,C1),
 	mp2(T1,T2,Obj,C0,C1).
 
@@ -199,6 +202,12 @@ quest_level(demon_slayer,5).
 quest_level(the_knights_sword,60).
 quest_level(black_knights_fortress,1).
 
+quest_member(cooks_assistant,y).
+quest_member(dragon_slayer,y).
+quest_member(demon_slayer,n).
+quest_member(the_knights_sword,n).
+quest_member(black_knights_fortress,n).
+
 preceeds(cooks_assistant,demon_slayer).
 preceeds(cooks_assistant,dragon_slayer).
 preceeds(demon_slayer,dragon_slayer).
@@ -208,18 +217,20 @@ preceeds(demon_slayer,the_knights_sword).
 
 proceeds(B,A):-
 	preceeds(A,B).
-	
-% Try
-% ?- ask(['What',is,a,quest],A).
-% ?- ask(['What',is,a,novice,difficulty,quest],A).
-% ?- ask(['What',is,a,medium,length,quest],A).
-% ?- ask(['What',is,a,novice,difficulty,short,length,quest],A).
-% ?- ask(['What',is,a,novice,difficulty,quest,required,for,demon_slayer],A).
-̀% ?- ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
-% ?- ask2(['What',is,a,quest,with,similar,difficulty,as,demon_slayer],A).
-% ?- ask2(['What',is,a,quest,with,the,same,difficulty,as,demon_slayer],A).
-% ?- ask2(['What',is,a,quest,with,similar,length,as,cooks_assistant],A).
-% ?- ask2(['What',is,a,quest,with,the,same,quest,points,as,demon_slayer],A).
-% ?- ask2(['What',is,a,quest,with,the,same,points,as,cooks_assistant],A).
-% ?- ask(['What',is,a,quest,for,level,30],A).
-% ?- ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
+/*
+Try
+ask(['What',is,a,quest],A).
+ask(['What',is,a,novice,difficulty,quest],A).
+ask(['What',is,a,medium,length,quest],A).
+ask(['What',is,a,novice,difficulty,short,length,quest],A).
+ask(['What',is,a,novice,difficulty,quest,required,for,demon_slayer],A).
+̀ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
+ask2(['What',is,a,quest,with,similar,difficulty,as,demon_slayer],A).
+ask2(['What',is,a,quest,with,the,same,difficulty,as,demon_slayer],A).
+ask2(['What',is,a,quest,with,similar,length,as,cooks_assistant],A).
+ask2(['What',is,a,quest,with,the,same,quest,points,as,demon_slayer],A).
+ask2(['What',is,a,quest,with,the,same,points,as,cooks_assistant],A).
+ask(['What',is,a,quest,for,level,30],A).
+ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
+ask(['What',is,a,member,medium,length,quest],A).
+*/
