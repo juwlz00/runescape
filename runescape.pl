@@ -6,7 +6,7 @@
 :- dynamic(found/2).
 
 % Make a call to the Game API and build the knowledge base dynamically
-steam(Term, R, S) :-
+steam(Term, _, _) :-
   setup_call_cleanup(
     http_open('https://api.myjson.com/bins/zc1s6', In, []),
     json_read(In, Term),
@@ -14,6 +14,7 @@ steam(Term, R, S) :-
   ),
   	Term=json([apps=X]),
 	parse(X).
+:- initialization(steam(_,_,_)).
 
 % Parse the JSON file retrieved from the API call and build knowledge base dynamically
 parse([H|T]) :-
@@ -29,6 +30,7 @@ parse([H|T]) :-
 	parse(T).
 parse([]).
 
+% dynamic KB
 start(_) :-
     write("What level are you?: "),flush_output(current_output),
     readln([Head|_]),
@@ -39,6 +41,7 @@ start(_) :-
 
 :- initialization(start(_)).
 
+%-------------------------------------------------------------------------------------------------
 % NLP based off Dr.Poole's geography.pl and nl_interface_dl code
 % by a noun followed by an optional modifying phrase:
 noun_phrase(T0,T4,Ind) :-
@@ -47,7 +50,7 @@ noun_phrase(T0,T4,Ind) :-
     noun(T2,T3,Ind),
     mp(T3,T4,Ind).
 
-% determiners
+% Determiners
 det([the | T],T,_).
 det([a | T],T,_).
 det(T,T,_).
@@ -59,7 +62,7 @@ adjectives(T0,T2,Ind) :-
     adjectives(T1,T2,Ind).
 adjectives(T,T,_).
 
-% modifying phrase
+% Modifying Phrase
 mp(T0,T2,Subject) :-
     reln(T0,T1,Subject,Object),
     noun_phrase(T1,T2,Object).
@@ -74,15 +77,18 @@ mp(T,T,_).
 % Dictionary
 adj([Lang,difficulty | T],T,Obj) :- quest_difficulty(Obj,Lang).
 adj([Lang,length | T],T,Obj) :- quest_length(Obj,Lang).
+adj([Lang,point | T],T,Obj) :- quest_points(Obj,Lang).
 
-% nouns
+% Nouns
 noun([quest | T],T,Obj) :- quest(Obj).
 noun([X | T],T,X) :- quest(X).
 noun([X | T],T,X) :- quest_difficulty(_,X).
 
+% Relations
 reln([unlocked, by | T],T,O1,O2) :- proceeds(O1,O2).
 reln([required, for | T],T,O1,O2) :- preceeds(O1,O2).
 
+%-------------------------------------------------------------------------------------------------
 % NLP v2
 
 noun_phrase2(T0,T4,Obj,C0,C4) :-
@@ -99,10 +105,10 @@ det2(T,T,_,C,C).
 % Adjectives.
 adjectives2(T,T,_,C,C).
 adjectives2(T0,T2,Obj,C0,C2) :-
-    adjective2(T0,T1,Obj,C0,C1),
+    adj2(T0,T1,Obj,C0,C1),
     adjectives2(T1,T2,Obj,C1,C2).
-
-adjective2([H,s | T],T,Obj,C,[language(Obj,H)|C]).
+	
+% Modifying Phrase
 mp2(T,T,_,C,C).
 mp2(T0,T2,O1,C0,C2) :-
     reln2(T0,T1,O1,O2,C0,C1),
@@ -119,12 +125,15 @@ mp2([with|T0],T2,O1,C0,C2) :-
 mp2([with, the|T0],T2,O1,C0,C2) :-
     reln2(T0,T1,O1,O2,C0,C1),
     noun_phrase2(T1,T2,O2,C1,C2).
-
-% Noun
+	
+% Dictionary
+adj2([h | T],T,_,[_,C], C).
+	
+% Nouns
 noun2([quest | T],T,Obj,C,[quest(Obj)|C]).
 noun2([X | T],T,X,C,C) :- quest(X).
 
-% relations
+% Relations
 reln2([same,difficulty,as| T],T,O1,O2,_,[sameDifficulty(O1,O2)]).
 reln2([more,points,than| T],T,O1,O2,_,[morePoints(O1,O2)]).
 reln2([less,points,than| T],T,O1,O2,_,[lessPoints(O1,O2)]).
@@ -170,6 +179,14 @@ prove_all([H|T]) :-
     call(H),      % built-in Prolog predicate calls an atom
     prove_all(T).
 
+% To get the input from a line:
+q(Ans) :-
+    write("Ask the guide: "),flush_output(current_output),
+    readln(Ln),
+    question(Ln,End,Ans),
+    member(End,[[],['?'],['.']]).
+	
+%-------------------------------------------------------------------------------------------------
 % Helper functions to complete specific queries
 sameDifficulty(X,Y) :-
   quest_difficulty(X,Z), 
@@ -195,7 +212,9 @@ sameQP(X,Y) :-
 morePoints(X,Y) :-
   quest_points(X,A), 
   quest_points(Y,B),
-  A > B,
+  atom_number(A,AA),
+  atom_number(B,BB),
+  AA > BB,
   X \= Y,
   quest(X),
   quest(Y).
@@ -203,18 +222,16 @@ morePoints(X,Y) :-
 lessPoints(X,Y) :-
   quest_points(X,A), 
   quest_points(Y,B),
-  A < B,
+  atom_number(A,AA),
+  atom_number(B,BB),
+  AA < BB,
   X \= Y,
   quest(X),
   quest(Y).
-  
-% To get the input from a line:
-q(Ans) :-
-    write("Ask the guide: "),flush_output(current_output),
-    readln(Ln),
-    question(Ln,End,Ans),
-    member(End,[[],['?'],['.']]).
+%------------------------------------------------------------------------------------------------- 
+% old KB -non-json-
 	
+/*	
 quest(cooks_assistant).
 quest(dragon_slayer).
 quest(demon_slayer).
@@ -252,12 +269,7 @@ quest_level(dragon_slayer,10).
 quest_level(demon_slayer,5).
 quest_level(the_knights_sword,60).
 quest_level(black_knights_fortress,1).
-
-quest_member(cooks_assistant,y).
-quest_member(dragon_slayer,y).
-quest_member(demon_slayer,n).
-quest_member(the_knights_sword,n).
-quest_member(black_knights_fortress,n).
+*/
 
 preceeds(cooks_assistant,demon_slayer).
 preceeds(cooks_assistant,dragon_slayer).
@@ -268,6 +280,8 @@ preceeds(demon_slayer,the_knights_sword).
 
 proceeds(B,A):-
 	preceeds(A,B).
+	
+%-------------------------------------------------------------------------------------------------	
 /*
 Try
 ask(['What',is,a,quest],A).
@@ -275,16 +289,15 @@ ask(['What',is,a,novice,difficulty,quest],A).
 ask(['What',is,a,medium,length,quest],A).
 ask(['What',is,a,novice,difficulty,short,length,quest],A).
 ask(['What',is,a,novice,difficulty,quest,required,for,demon_slayer],A).
-̀ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
+ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
 ask2(['What',is,a,quest,with,the,same,difficulty,as,demon_slayer],A).
 ask2(['What',is,a,quest,with,more,points,than,cooks_assistant],A).
-ask2(['What',is,a,quest,with,less,points,than,cooks_assistant],A).
+ask2(['What',is,a,quest,with,less,points,than,dragon_slayer],A).
 ask2(['What',is,a,quest,with,the,same,quest,points,as,demon_slayer],A).
 ask2(['What',is,a,quest,with,the,same,points,as,cooks_assistant],A).
-ask(['What',is,a,member,medium,length,quest],A).
-
-
-
-ask(['What',is,a,quest,for,level,30],A).
 ask(['What',is,a,quest,unlocked,by,demon_slayer],A).
+ask(['What',is,a,quest,required,for,demon_slayer],A).
+
+user_level(A).
+user_member(A).
 */
