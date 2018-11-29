@@ -1,3 +1,34 @@
+% JSON STUFF
+
+:- use_module(library(http/http_open)).
+:- use_module(library(http/json)).
+:- use_module(library(http/json_convert)).
+:- dynamic(found/2).
+
+% Make a call to the Game API and build the knowledge base dynamically
+steam(Term, R, S) :-
+  setup_call_cleanup(
+    http_open('https://api.myjson.com/bins/zc1s6', In, []),
+    json_read(In, Term),
+    close(In)
+  ),
+  	Term=json([apps=X]),
+	parse(X).
+
+% Parse the JSON file retrieved from the API call and build knowledge base dynamically
+parse([H|T]) :-
+	H=json([H1,H2,H3,H4|_]),
+	=(H1,=(name,Name)),
+	=(H2,=(difficulty,Difficulty)),
+	=(H3,=(length,Length)),
+	=(H4,=(questpoints,Qp)),
+	  assert(quest(Name)),
+	  assert(quest_difficulty(Name,Difficulty)),
+	  assert(quest_length(Name,Length)),
+	  assert(quest_points(Name,Qp)),
+	parse(T).
+parse([]).
+
 start(_) :-
     write("What level are you?: "),flush_output(current_output),
     readln([Head|_]),
@@ -51,7 +82,6 @@ noun([X | T],T,X) :- quest_difficulty(_,X).
 
 reln([unlocked, by | T],T,O1,O2) :- proceeds(O1,O2).
 reln([required, for | T],T,O1,O2) :- preceeds(O1,O2).
-% reln([level | T],T,O1,O2) :- quest_level(_,T).
 
 % NLP v2
 
