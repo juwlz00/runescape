@@ -5,7 +5,7 @@
 :- use_module(library(http/json_convert)).
 :- dynamic(found/2).
 
-% Make a call to the Game API and build the knowledge base dynamically
+% Make a call to the Guide API 
 steam(Term, _, _) :-
   setup_call_cleanup(
     http_open('https://api.myjson.com/bins/zc1s6', In, []),
@@ -17,6 +17,7 @@ steam(Term, _, _) :-
 :- initialization(steam(_,_,_)).
 
 % Parse the JSON file retrieved from the API call and build knowledge base dynamically
+% Extracts each key value pair using pattern matching
 parse([H|T]) :-
 	H=json([H1,H2,H3,H4|_]),
 	=(H1,=(name,Name)),
@@ -90,7 +91,7 @@ reln([required, for | T],T,O1,O2) :- preceeds(O1,O2).
 
 %-------------------------------------------------------------------------------------------------
 % NLP v2
-
+% This NLP is more complex (in terms of relations) than the first version. Does comparison between facts in knowledge base
 noun_phrase2(T0,T4,Obj,C0,C4) :-
     det2(T0,T1,Obj,C0,C1),
     adjectives2(T1,T2,Obj,C1,C2),
